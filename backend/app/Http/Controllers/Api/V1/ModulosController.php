@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\ModulosCollection;
 use App\Http\Resources\V1\ModulosResource;
 use App\Models\Modulos;
@@ -21,7 +22,11 @@ class ModulosController extends Controller
    
     public function store(Request $request)
     {
-        Modulos::create($request->all());
+        $validatedData = $request->validate([
+            'titulo' => 'required|string|max:255',
+        ]);
+    
+        Modulos::create($validatedData);
         return response()->json(['message' => 'Modulo Created']);
     }
 

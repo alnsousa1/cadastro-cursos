@@ -22,7 +22,14 @@ class CursosController extends Controller
 
     public function store(Request $request)
     {
-        Cursos::create($request->all());
+        $validatedData = $request->validate([
+            'titulo' => 'required|string|max:255',
+            'descricao' => 'required|string|max:255',
+            'imagem' => 'required|string|max:255',
+        ]);
+    
+        Cursos::create($validatedData);
+    
         return response()->json(['message' => 'Curso Created']);
     }
 
