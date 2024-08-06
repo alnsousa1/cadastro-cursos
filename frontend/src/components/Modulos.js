@@ -8,24 +8,43 @@ function Modulos() {
   const [modulos, setModulos] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [titulo, setTitulo] = useState('');
+  const [token, setToken] = useState(''); // Adicione lógica para obter o token, se necessário
 
   useEffect(() => {
-    buscarModulos();
-  }, []);
+    if (cursoId) {
+      buscarModulos();
+    }
+  }, [cursoId]);
 
   const buscarModulos = () => {
-    fetch(`http://localhost:8000/api/v1/cursos/${cursoId}/modulos`)
+    fetch(`http://localhost:8000/api/v1/cursos/${cursoId}/modulos`, {
+      headers: {
+        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+      }
+    })
       .then(response => response.json())
       .then(response => {
         setModulos(response.data);
       });
   };
 
-  const cadastraModulo = (modulo) => {
+  const handleModuloClick = (moduloId) => {
+    navigate(`/modulos/${cursoId}/${moduloId}/aulas`); // Redireciona para a listagem de aulas
+  };
+
+  const cadastraModulo = () => {
+    if (!titulo) {
+      alert('Por favor, insira o título do módulo.');
+      return;
+    }
+
     fetch(`http://localhost:8000/api/v1/cursos/${cursoId}/modulos`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(modulo)
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+      },
+      body: JSON.stringify({ titulo })
     })
       .then(response => {
         if (response.ok) {
@@ -35,16 +54,29 @@ function Modulos() {
         }
       })
       .then(data => {
-        navigate(`/aulas/${data.id}`); // Redireciona para a página de aulas com o ID do módulo
+        buscarModulos(); // Atualiza a lista de módulos após o cadastro
+        fecharModal();
       })
       .catch(error => alert(error.message));
   };
 
+  const abrirModal = () => {
+    setModalAberto(true);
+  };
+
+  const fecharModal = () => {
+    setModalAberto(false);
+    setTitulo('');
+  };
+
   return (
     <div>
-      <Modal show={modalAberto} onHide={() => setModalAberto(false)}>
+      <Button variant="primary" type="button" onClick={abrirModal} style={{ marginBottom: '20px' }}>
+        Novo
+      </Button>
+      <Modal show={modalAberto} onHide={fecharModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Cadastro de módulo</Modal.Title>
+          <Modal.Title>Cadastro de Módulo</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -55,11 +87,10 @@ function Modulos() {
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setModalAberto(false)}>Fechar</Button>
-          <Button variant="primary" type="button" onClick={() => cadastraModulo({ titulo })}>Cadastrar</Button>
+          <Button variant="secondary" onClick={fecharModal}>Fechar</Button>
+          <Button variant="primary" type="button" onClick={cadastraModulo}>Cadastrar</Button>
         </Modal.Footer>
       </Modal>
-      <Button variant="primary" type="button" onClick={() => setModalAberto(true)}>Novo</Button>
       <Table striped bordered hover>
         <thead>
           <tr>
@@ -69,7 +100,7 @@ function Modulos() {
         </thead>
         <tbody>
           {modulos.map(modulo => (
-            <tr key={modulo.id}>
+            <tr key={modulo.id} onClick={() => handleModuloClick(modulo.id)} style={{ cursor: 'pointer' }}>
               <td>{modulo.titulo}</td>
               <td>
                 <Button variant="primary">Editar</Button>

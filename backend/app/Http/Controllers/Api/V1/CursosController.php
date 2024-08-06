@@ -22,22 +22,22 @@ class CursosController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validatedData = $request->validate([
-            'titulo' => 'required|string|max:255',
-            'descricao' => 'required|string|max:255',
-            'imagem' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ]);
-    
-        // Salva a imagem
-        if ($request->hasFile('imagem')) {
-            $path = $request->file('imagem')->store('images/cursos', 'public');
-            $validatedData['imagem'] = $path;
-        }
-    
-        Cursos::create($validatedData);
-        return response()->json(['message' => 'Curso Created']);
+{
+    $validatedData = $request->validate([
+        'titulo' => 'required|string|max:255',
+        'descricao' => 'required|string|max:255',
+        'imagem' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+    ]);
+
+    if ($request->hasFile('imagem')) {
+        $path = $request->file('imagem')->store('images/cursos', 'public');
+        $validatedData['imagem'] = $path;
     }
+
+    $curso = Cursos::create($validatedData);
+    return response()->json(['id' => $curso->id, 'message' => 'Curso Created']);
+}
+
     
 
     public function update(Request $request, $id)

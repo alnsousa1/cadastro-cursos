@@ -11,4 +11,15 @@ class Modulos extends Model
 
     protected $table = 'modulos';
     protected $fillable = ['titulo'];
+
+    public function curso()
+    {
+        return $this->belongsTo(Cursos::class);
+    }
+
+    public function aulas()
+{
+    return $this->hasMany(Aula::class);
+}
+
 }

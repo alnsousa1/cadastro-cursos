@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 function Cursos() {
   const navigate = useNavigate();
-  const [id, setId] = useState(null); // Estado para armazenar o ID do curso que está sendo editado
+  const [id, setId] = useState(null);
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
   const [imagem, setImagem] = useState(null);
@@ -39,7 +39,7 @@ function Cursos() {
         setId(response.data.id);
         setTitulo(response.data.titulo);
         setDescricao(response.data.descricao);
-        setImagem(null); // Resetar o estado da imagem para que um novo upload possa ser feito
+        setImagem(null);
         abrirModal();
       });
   };
@@ -62,7 +62,7 @@ function Cursos() {
         }
       })
       .then(data => {
-        navigate(`/modulos/${data.id}`); // Redireciona para a página de módulos com o ID do curso
+        navigate(`/cursos/${data.id}/modulos`);
       })
       .catch(error => alert(error.message));
   };
@@ -74,12 +74,12 @@ function Cursos() {
     if (curso.imagem) {
       formData.append('imagem', curso.imagem);
     }
-  
+
     fetch("http://localhost:8000/api/v1/cursos/" + curso.id, {
-      method: 'POST', // Laravel normalmente aceita 'POST' com '_method=PUT' para atualizar
+      method: 'POST',
       body: formData,
       headers: {
-        'X-HTTP-Method-Override': 'PUT' // Envia cabeçalho para indicar atualização
+        'X-HTTP-Method-Override': 'PUT'
       }
     })
       .then(response => {
@@ -98,7 +98,6 @@ function Cursos() {
       })
       .catch(error => alert(error.message));
   };
-  
 
   const submit = () => {
     const curso = {
@@ -180,21 +179,19 @@ function Cursos() {
             </tr>
           </thead>
           <tbody>
-            {
-              cursos.map(curso =>
-                <tr key={curso.id}>
-                  <td>{curso.titulo}</td>
-                  <td>{curso.descricao}</td>
-                  <td>
-                    <img src={`http://localhost:8000/storage/${curso.imagem}`} alt="Capa" style={{ width: '120px', height: '90px' }} />
-                  </td>
-                  <td>
-                    <Button variant="primary" onClick={() => editarCurso(curso.id)}>Editar</Button>
-                    <Button variant="danger" onClick={() => deletarCurso(curso.id)}>Excluir</Button>
-                  </td>
-                </tr>
-              )
-            }
+            {cursos.map(curso =>
+              <tr key={curso.id} onClick={() => navigate(`/cursos/${curso.id}/modulos`)} style={{ cursor: 'pointer' }}>
+                <td>{curso.titulo}</td>
+                <td>{curso.descricao}</td>
+                <td>
+                  <img src={`http://localhost:8000/storage/${curso.imagem}`} alt="Capa" style={{ width: '120px', height: '90px' }} />
+                </td>
+                <td>
+                  <Button variant="primary" onClick={(e) => {e.stopPropagation(); editarCurso(curso.id)}}>Editar</Button>
+                  <Button variant="danger" onClick={(e) => {e.stopPropagation(); deletarCurso(curso.id)}}>Excluir</Button>
+                </td>
+              </tr>
+            )}
           </tbody>
         </Table>
       </div>

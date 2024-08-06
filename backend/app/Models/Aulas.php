@@ -2,13 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Aulas extends Model
+class Aula extends Model
 {
-    use HasFactory;
+    protected $fillable = ['nome', 'descricao', 'link_video', 'modulo_id', 'curso_id'];
 
-    protected $table = 'aulas';
-    protected $fillable = ['nome', 'descricao', 'link_aula'];
+    public function modulo()
+    {
+        return $this->belongsTo(Modulos::class);
+    }
+
+    public function curso()
+    {
+        return $this->belongsTo(Cursos::class);
+    }
 }
+

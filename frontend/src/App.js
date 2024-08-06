@@ -11,8 +11,10 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/api/v1/cursos" index element={<Cursos />}></Route>
+          <Route path="/cursos/:cursoId/modulos" element={<Modulos />} />
           <Route path="/modulos/:cursoId" element={<Modulos />} />
           <Route path="/aulas/:moduloId" element={<Aulas />} />
+          <Route path="/modulos/:cursoId/:moduloId/aulas" element={<Aulas />} />
         </Routes>
       </BrowserRouter>
     </div>
