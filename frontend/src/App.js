@@ -10,7 +10,7 @@ function App() {
       <h1>E-Learning - Cursos Online</h1>
       <BrowserRouter>
         <Routes>
-          <Route path="/" index element={<Cursos />}></Route>
+          <Route path="/api/v1/cursos" index element={<Cursos />}></Route>
           <Route path="/modulos/:cursoId" element={<Modulos />} />
           <Route path="/aulas/:moduloId" element={<Aulas />} />
         </Routes>

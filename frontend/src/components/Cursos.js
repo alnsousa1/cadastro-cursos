@@ -118,7 +118,7 @@ function Cursos() {
   };
 
   const reset = () => {
-    setId(0);
+    setId(null);
     setTitulo('');
     setDescricao('');
     setImagem('');
@@ -162,7 +162,7 @@ function Cursos() {
             Fechar
           </Button>
           <Button variant="primary" type="button" onClick={submit}>
-            {id ? "Atualizar" : "Cadastrar"}
+            Cadastrar
           </Button>
         </Modal.Footer>
       </Modal>
