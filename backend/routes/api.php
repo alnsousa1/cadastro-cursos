@@ -10,8 +10,14 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
-Route::group(['prefix' => 'v1'], function(){
+Route::prefix('v1')->group(function () {
     Route::apiResource('aulas', AulasController::class);
-    Route::apiResource('cursos', CursosController::class);
     Route::apiResource('modulos', ModulosController::class);
+
+    // Rotas explícitas para CursosController
+    Route::get('/cursos', [CursosController::class, 'index']);
+    Route::post('/cursos', [CursosController::class, 'store']);
+    Route::get('/cursos/{curso}', [CursosController::class, 'show']);
+    Route::put('/cursos/{curso}', [CursosController::class, 'update']);
+    Route::delete('/cursos/{curso}', [CursosController::class, 'destroy']);
 });
