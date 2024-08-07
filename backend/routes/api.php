@@ -11,22 +11,20 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::prefix('v1')->group(function () {
-    Route::apiResource('aulas', AulasController::class);
-    Route::apiResource('modulos', ModulosController::class);
-
-    // Rotas explícitas para CursosController
-    Route::get('/cursos', [CursosController::class, 'index']);
-    Route::post('/cursos', [CursosController::class, 'store']);
-    Route::get('/cursos/{curso}', [CursosController::class, 'show']);
-    Route::put('/cursos/{curso}', [CursosController::class, 'update']);
-    Route::delete('/cursos/{curso}', [CursosController::class, 'destroy']);
-    
-    Route::get('/modulos', [ModulosController::class, 'index']);
-    Route::get('cursos/{curso}/modulos', [ModulosController::class, 'index']);
+    // Aulas
+    Route::apiResource('aulas', AulasController::class)->except(['index', 'store']);
     Route::get('/modulos/{moduloId}/aulas', [AulasController::class, 'index']);
     Route::post('/modulos/{moduloId}/aulas', [AulasController::class, 'store']);
+    
+    // Módulos
+    Route::apiResource('modulos', ModulosController::class)->except(['index', 'store']);
+    Route::get('/modulos', [ModulosController::class, 'index']);
     Route::post('/cursos/{curso}/modulos', [ModulosController::class, 'store']);
-    Route::get('/modulos/{modulo}', [ModulosController::class, 'show']);
-    Route::put('/modulos/{modulo}', [ModulosController::class, 'update']);
-    Route::delete('/modulos/{modulo}', [ModulosController::class, 'destroy']);
+    Route::get('/cursos/{curso}/modulos', [ModulosController::class, 'index']);
+    
+    // Cursos
+    Route::apiResource('cursos', CursosController::class)->except(['index', 'store']);
+    Route::get('/cursos', [CursosController::class, 'index']);
+    Route::post('/cursos', [CursosController::class, 'store']);
 });
+

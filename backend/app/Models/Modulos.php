@@ -18,8 +18,8 @@ class Modulos extends Model
     }
 
     public function aulas()
-{
-    return $this->hasMany(Aula::class);
-}
+    {
+        return $this->hasMany(Aulas::class, 'modulo_id');
+    }
 
 }

@@ -39,9 +39,6 @@ class ModulosController extends Controller
         return response()->json(['id' => $modulo->id, 'message' => 'Módulo Created'], 201);
     }
 
-
-
-
     public function update(Request $request, $id)
     {
         $modulo = Modulos::findOrFail($id);
