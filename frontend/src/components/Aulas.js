@@ -9,7 +9,7 @@ function Aulas() {
   const [modalAberto, setModalAberto] = useState(false);
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
-  const [linkVideo, setLinkVideo] = useState('');
+  const [linkAula, setLinkAula] = useState('');
   const [token, setToken] = useState(''); // Adicione lógica para obter o token, se necessário
 
   useEffect(() => {
@@ -33,18 +33,17 @@ function Aulas() {
   console.log(`moduloId recebido: ${moduloId}, cursoId recebido: ${cursoId}`);
 
   const cadastraAula = () => {
-    if (!nome || !descricao || !linkVideo) {
+    if (!nome || !descricao || !linkAula) {
       alert('Por favor, preencha todos os campos.');
       return;
     }
-
     fetch(`http://localhost:8000/api/v1/modulos/${moduloId}/aulas`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+        'Authorization': `Bearer ${token}` // Certifique-se de que o token está correto
       },
-      body: JSON.stringify({ nome, descricao, link_video: linkVideo, curso_id: cursoId })
+      body: JSON.stringify({ nome, descricao, link_aula: linkAula, curso_id: cursoId })
     })
       .then(response => {
         if (response.ok) {
@@ -53,12 +52,14 @@ function Aulas() {
           throw new Error('Não foi possível adicionar a aula');
         }
       })
-      .then(() => {
-        buscarAulas(); // Atualiza a lista de aulas
-        fecharModal();
+      .then(data => {
+        // Atualize a lista de aulas localmente
+        setAulas([...aulas, data]); // Adicione a nova aula à lista existente
+        fecharModal(); // Fecha o modal após o cadastro
       })
       .catch(error => alert(error.message));
   };
+  
 
   const abrirModal = () => {
     setModalAberto(true);
@@ -68,7 +69,7 @@ function Aulas() {
     setModalAberto(false);
     setNome('');
     setDescricao('');
-    setLinkVideo('');
+    setLinkAula('');
   };
 
   return (
@@ -92,7 +93,7 @@ function Aulas() {
             </Form.Group>
             <Form.Group className="mb-3" controlId="formBasicLink">
               <Form.Label>Link do Vídeo</Form.Label>
-              <Form.Control type="url" placeholder="Link do vídeo" value={linkVideo} onChange={e => setLinkVideo(e.target.value)} />
+              <Form.Control type="url" placeholder="Link do vídeo" value={linkAula} onChange={e => setLinkAula(e.target.value)} />
             </Form.Group>
           </Form>
         </Modal.Body>
@@ -107,6 +108,7 @@ function Aulas() {
             <th>Nome</th>
             <th>Descrição</th>
             <th>Link do Vídeo</th>
+            <th>Opções</th>
           </tr>
         </thead>
         <tbody>
@@ -114,7 +116,7 @@ function Aulas() {
             <tr key={aula.id}>
               <td>{aula.nome}</td>
               <td>{aula.descricao}</td>
-              <td><a href={aula.link_video} target="_blank" rel="noopener noreferrer">Assistir</a></td>
+              <td><a href={aula.aula} target="_blank" rel="noopener noreferrer">Assistir</a></td>
             </tr>
           ))}
         </tbody>

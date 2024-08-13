@@ -25,13 +25,13 @@ class AulasController extends Controller
         $request->validate([
             'nome' => 'required|string|max:255',
             'descricao' => 'required|string',
-            'link_video' => 'required|url',
+            'link_aula' => 'required|url',
         ]);
 
         $aula = Aulas::create([
             'nome' => $request->nome,
             'descricao' => $request->descricao,
-            'link_video' => $request->link_video,
+            'link_aula' => $request->link_aula,
             'modulo_id' => $moduloId,
             'curso_id' => $request->curso_id // Certifique-se de enviar o curso_id no request
         ]);

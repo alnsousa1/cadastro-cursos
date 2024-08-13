@@ -11,4 +11,9 @@ class Cursos extends Model
 
     protected $table = 'cursos';
     protected $fillable = ['titulo', 'descricao', 'imagem'];
+
+    public function aulas()
+    {
+        return $this->hasMany(Aulas::class, 'curso_id');
+    }
 }

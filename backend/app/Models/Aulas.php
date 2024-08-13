@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Aulas extends Model
 {
-    protected $fillable = ['nome', 'descricao', 'link_video', 'modulo_id', 'curso_id'];
+    protected $fillable = ['nome', 'descricao', 'link_aula', 'modulo_id', 'curso_id'];
 
     public function modulo()
     {
