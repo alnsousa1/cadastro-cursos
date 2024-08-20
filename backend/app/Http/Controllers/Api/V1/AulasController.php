@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\AulasResource;
 use App\Models\Aulas;
+use App\Models\Cursos;
 use App\Models\Modulos;
 use Illuminate\Http\Request;
 
 class AulasController extends Controller
 {
-    public function index(Modulos $modulo)
+    public function index(Cursos $curso, $moduloId)
     {
-        return response()->json(['data' => $modulo->aulas]);
+        $modulo = $curso->modulos->where('id', $moduloId)->first();
+
+        return AulasResource::collection($modulo->aulas);
     }
 
     public function show(Aulas $aula)

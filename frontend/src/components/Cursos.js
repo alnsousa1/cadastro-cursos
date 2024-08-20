@@ -71,15 +71,17 @@ function Cursos() {
     const formData = new FormData();
     formData.append('titulo', curso.titulo);
     formData.append('descricao', curso.descricao);
+
+    // Somente adicionar a imagem se ela for alterada
     if (curso.imagem) {
       formData.append('imagem', curso.imagem);
     }
 
-    fetch("http://localhost:8000/api/v1/cursos/" + curso.id, {
-      method: 'POST',
+    fetch(`http://localhost:8000/api/v1/cursos/${curso.id}`, {
+      method: 'POST', // Se o backend espera PUT, continue usando PUT.
       body: formData,
       headers: {
-        'X-HTTP-Method-Override': 'PUT'
+        'X-HTTP-Method-Override': 'PUT' // Isso é importante se o backend espera um PUT, mas você está usando POST
       }
     })
       .then(response => {
@@ -98,6 +100,7 @@ function Cursos() {
       })
       .catch(error => alert(error.message));
   };
+
 
   const submit = () => {
     const curso = {
@@ -187,8 +190,8 @@ function Cursos() {
                   <img src={`http://localhost:8000/storage/${curso.imagem}`} alt="Capa" style={{ width: '120px', height: '90px' }} />
                 </td>
                 <td>
-                  <Button variant="primary" onClick={(e) => {e.stopPropagation(); editarCurso(curso.id)}}>Editar</Button>
-                  <Button variant="danger" onClick={(e) => {e.stopPropagation(); deletarCurso(curso.id)}}>Excluir</Button>
+                  <Button variant="primary" onClick={(e) => { e.stopPropagation(); editarCurso(curso.id) }}>Editar</Button>
+                  <Button variant="danger" onClick={(e) => { e.stopPropagation(); deletarCurso(curso.id) }}>Excluir</Button>
                 </td>
               </tr>
             )}

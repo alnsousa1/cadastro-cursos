@@ -13,8 +13,8 @@ Route::get('/user', function (Request $request) {
 Route::prefix('v1')->group(function () {
     // Aulas
     Route::apiResource('aulas', AulasController::class)->except(['index', 'store']);
-    Route::get('/modulos/{moduloId}/aulas', [AulasController::class, 'index']);
-    Route::post('/modulos/{moduloId}/aulas', [AulasController::class, 'store']);
+    Route::get('/cursos/{curso}/modulos/{moduloId}/aulas', [AulasController::class, 'index']);
+    Route::post('/modulos/{modulos}/aulas', [AulasController::class, 'store']);
     
     // Módulos
     Route::apiResource('modulos', ModulosController::class)->except(['index', 'store']);

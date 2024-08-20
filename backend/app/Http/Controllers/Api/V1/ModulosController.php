@@ -31,12 +31,12 @@ class ModulosController extends Controller
             return response()->json(['error' => 'Curso ID inválido'], 400);
         }
 
-        $modulo = new Modulos();
-        $modulo->titulo = $request->input('titulo');
-        $modulo->curso_id = (int) $cursoId;
-        $modulo->save();
+        $modulos = new Modulos();
+        $modulos->titulo = $request->input('titulo');
+        $modulos->curso_id = (int) $cursoId;
+        $modulos->save();
 
-        return response()->json(['id' => $modulo->id, 'message' => 'Módulo Created'], 201);
+        return response()->json(['id' => $modulos->id, 'message' => 'Módulo Created'], 201);
     }
 
     public function update(Request $request, $id)

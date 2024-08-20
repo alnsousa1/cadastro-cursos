@@ -20,7 +20,7 @@ function Aulas() {
 
   const buscarAulas = () => {
     console.log(`Fetching aulas for moduloId: ${moduloId}`); // Adicione log para verificar o moduloId
-    fetch(`http://localhost:8000/api/v1/modulos/${moduloId}/aulas`, {
+    fetch(`http://localhost:8000/api/v1/cursos/${cursoId}/modulos/${moduloId}/aulas`, {
       headers: {
         'Authorization': `Bearer ${token}` // Inclua o token, se necessário
       }

@@ -9,6 +9,7 @@ function Modulos() {
   const [modalAberto, setModalAberto] = useState(false);
   const [titulo, setTitulo] = useState('');
   const [token, setToken] = useState(''); // Adicione lógica para obter o token, se necessário
+  const [moduloEditando, setModuloEditando] = useState(null);
 
   useEffect(() => {
     if (cursoId) {
@@ -38,11 +39,17 @@ function Modulos() {
       return;
     }
 
-    fetch(`http://localhost:8000/api/v1/cursos/${cursoId}/modulos`, {
-      method: 'POST',
+    const url = moduloEditando
+      ? `http://localhost:8000/api/v1/modulos/${moduloEditando.id}`
+      : `http://localhost:8000/api/v1/cursos/${cursoId}/modulos`;
+
+    const method = moduloEditando ? 'PUT' : 'POST';
+
+    fetch(url, {
+      method: method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ titulo })
     })
@@ -50,15 +57,43 @@ function Modulos() {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error('Não foi possível adicionar o módulo');
+          throw new Error('Não foi possível salvar o módulo');
         }
       })
       .then(data => {
-        buscarModulos(); // Atualiza a lista de módulos após o cadastro
+        buscarModulos(); // Atualiza a lista de módulos
         fecharModal();
+        setModuloEditando(null); // Limpa o estado de edição
       })
       .catch(error => alert(error.message));
   };
+
+
+  const editarModulo = (modulo) => {
+    setModuloEditando(modulo);
+    setTitulo(modulo.titulo);
+    setModalAberto(true);
+  };
+
+  const excluirModulo = (moduloId) => {
+    if (window.confirm('Tem certeza que deseja excluir este módulo?')) {
+      fetch(`http://localhost:8000/api/v1/modulos/${moduloId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+        .then(response => {
+          if (response.ok) {
+            buscarModulos(); // Atualiza a lista de módulos após a exclusão
+          } else {
+            throw new Error('Não foi possível excluir o módulo');
+          }
+        })
+        .catch(error => alert(error.message));
+    }
+  };
+
 
   const abrirModal = () => {
     setModalAberto(true);
@@ -100,15 +135,16 @@ function Modulos() {
         </thead>
         <tbody>
           {modulos.map(modulo => (
-            <tr key={modulo.id} onClick={() => handleModuloClick(modulo.id)} style={{ cursor: 'pointer' }}>
-              <td>{modulo.titulo}</td>
+            <tr key={modulo.id} style={{ cursor: 'pointer' }}>
+              <td onClick={() => handleModuloClick(modulo.id)}>{modulo.titulo}</td>
               <td>
-                <Button variant="primary">Editar</Button>
-                <Button variant="danger">Excluir</Button>
+                <Button variant="primary" onClick={() => editarModulo(modulo)}>Editar</Button>
+                <Button variant="danger" onClick={() => excluirModulo(modulo.id)}>Excluir</Button>
               </td>
             </tr>
           ))}
         </tbody>
+
       </Table>
     </div>
   );
