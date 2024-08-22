@@ -10,6 +10,7 @@ function Aulas() {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [linkAula, setLinkAula] = useState('');
+  const [id, setId] = useState(null); // Adiciona um estado para armazenar o ID da aula a ser editada
   const [token, setToken] = useState(''); // Adicione lógica para obter o token, se necessário
 
   useEffect(() => {
@@ -37,8 +38,13 @@ function Aulas() {
       alert('Por favor, preencha todos os campos.');
       return;
     }
-    fetch(`http://localhost:8000/api/v1/modulos/${moduloId}/aulas`, {
-      method: 'POST',
+    const metodo = id ? 'PUT' : 'POST';
+    const url = id 
+      ? `http://localhost:8000/api/v1/aulas/${id}`  // Rota corrigida para edição
+      : `http://localhost:8000/api/v1/modulos/${moduloId}/aulas`;  // Rota para cadastro
+
+    fetch(url, {
+      method: metodo,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}` // Certifique-se de que o token está correto
@@ -49,17 +55,54 @@ function Aulas() {
         if (response.ok) {
           return response.json();
         } else {
-          throw new Error('Não foi possível adicionar a aula');
+          throw new Error(id ? 'Não foi possível editar a aula' : 'Não foi possível adicionar a aula');
         }
       })
       .then(data => {
-        // Atualize a lista de aulas localmente
-        setAulas([...aulas, data]); // Adicione a nova aula à lista existente
-        fecharModal(); // Fecha o modal após o cadastro
+        if (id) {
+          // Atualiza a lista de aulas localmente após edição
+          setAulas(aulas.map(aula => aula.id === id ? data : aula));
+        } else {
+          // Adiciona a nova aula à lista existente
+          setAulas([...aulas, data]);
+        }
+        fecharModal(); // Fecha o modal após o cadastro ou edição
       })
       .catch(error => alert(error.message));
   };
-  
+
+  const editarAula = (id) => {
+    fetch(`http://localhost:8000/api/v1/aulas/${id}`, {  // Rota corrigida para edição
+      headers: {
+        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+      }
+    })
+      .then(response => response.json())
+      .then(response => {
+        setId(response.data.id);
+        setNome(response.data.nome);
+        setDescricao(response.data.descricao);
+        setLinkAula(response.data.link_aula);
+        abrirModal();
+      });
+  };
+
+  const deletarAula = (id) => {
+    fetch(`http://localhost:8000/api/v1/aulas/${id}`, {  // Rota corrigida para exclusão
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+      }
+    })
+      .then(response => {
+        if (response.ok) {
+          setAulas(aulas.filter(aula => aula.id !== id));
+        } else {
+          throw new Error('Não foi possível excluir a aula');
+        }
+      })
+      .catch(error => alert(error.message));
+  };
 
   const abrirModal = () => {
     setModalAberto(true);
@@ -70,6 +113,7 @@ function Aulas() {
     setNome('');
     setDescricao('');
     setLinkAula('');
+    setId(null); // Reseta o ID da aula ao fechar o modal
   };
 
   return (
@@ -79,7 +123,7 @@ function Aulas() {
       </Button>
       <Modal show={modalAberto} onHide={fecharModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Cadastro de Aula</Modal.Title>
+          <Modal.Title>{id ? 'Editar Aula' : 'Cadastro de Aula'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -99,7 +143,7 @@ function Aulas() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={fecharModal}>Fechar</Button>
-          <Button variant="primary" type="button" onClick={cadastraAula}>Cadastrar</Button>
+          <Button variant="primary" type="button" onClick={cadastraAula}>{id ? 'Salvar Alterações' : 'Cadastrar'}</Button>
         </Modal.Footer>
       </Modal>
       <Table striped bordered hover>
@@ -116,7 +160,11 @@ function Aulas() {
             <tr key={aula.id}>
               <td>{aula.nome}</td>
               <td>{aula.descricao}</td>
-              <td><a href={aula.aula} target="_blank" rel="noopener noreferrer">Assistir</a></td>
+              <td><a href={aula.link_aula} target="_blank" rel="noopener noreferrer">Assistir</a></td>
+              <td>
+                <Button variant="primary" onClick={() => editarAula(aula.id)}>Editar</Button>
+                <Button variant="danger" onClick={() => deletarAula(aula.id)}>Excluir</Button>
+              </td>
             </tr>
           ))}
         </tbody>
