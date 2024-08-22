@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Form, Modal } from 'react-bootstrap';
+import { Table, Button, Form, Modal, Pagination } from 'react-bootstrap';
 import { useParams, useNavigate } from "react-router-dom";
+import Swal from 'sweetalert2';
+import { FaArrowUp, FaArrowDown } from 'react-icons/fa'; // Adicione a importação dos ícones
 
 function Modulos() {
   const { cursoId } = useParams();
@@ -10,6 +12,11 @@ function Modulos() {
   const [titulo, setTitulo] = useState('');
   const [token, setToken] = useState(''); // Adicione lógica para obter o token, se necessário
   const [moduloEditando, setModuloEditando] = useState(null);
+  const [search, setSearch] = useState(''); // Estado para busca
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState('titulo'); // Estado para coluna de ordenação
+  const [sortOrder, setSortOrder] = useState('asc'); // Estado para ordem de ordenação
 
   useEffect(() => {
     if (cursoId) {
@@ -35,7 +42,7 @@ function Modulos() {
 
   const cadastraModulo = () => {
     if (!titulo) {
-      alert('Por favor, insira o título do módulo.');
+      Swal.fire('Erro', 'Por favor, insira o título do módulo.', 'error');
       return;
     }
 
@@ -55,19 +62,19 @@ function Modulos() {
     })
       .then(response => {
         if (response.ok) {
+          Swal.fire('Sucesso', `Módulo ${moduloEditando ? 'atualizado' : 'cadastrado'} com sucesso!`, 'success');
           return response.json();
         } else {
           throw new Error('Não foi possível salvar o módulo');
         }
       })
       .then(data => {
-        buscarModulos(); // Atualiza a lista de módulos
+        buscarModulos();
         fecharModal();
-        setModuloEditando(null); // Limpa o estado de edição
+        setModuloEditando(null);
       })
-      .catch(error => alert(error.message));
+      .catch(error => Swal.fire('Erro', error.message, 'error'));
   };
-
 
   const editarModulo = (modulo) => {
     setModuloEditando(modulo);
@@ -76,24 +83,35 @@ function Modulos() {
   };
 
   const excluirModulo = (moduloId) => {
-    if (window.confirm('Tem certeza que deseja excluir este módulo?')) {
-      fetch(`http://localhost:8000/api/v1/modulos/${moduloId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-        .then(response => {
-          if (response.ok) {
-            buscarModulos(); // Atualiza a lista de módulos após a exclusão
-          } else {
-            throw new Error('Não foi possível excluir o módulo');
+    Swal.fire({
+      title: 'Você tem certeza?',
+      text: "Você não poderá reverter isso!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sim, excluir!',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`http://localhost:8000/api/v1/modulos/${moduloId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
         })
-        .catch(error => alert(error.message));
-    }
+          .then(response => {
+            if (response.ok) {
+              Swal.fire('Excluído!', 'O módulo foi excluído.', 'success');
+              buscarModulos();
+            } else {
+              throw new Error('Não foi possível excluir o módulo');
+            }
+          })
+          .catch(error => Swal.fire('Erro', error.message, 'error'));
+      }
+    });
   };
-
 
   const abrirModal = () => {
     setModalAberto(true);
@@ -104,14 +122,48 @@ function Modulos() {
     setTitulo('');
   };
 
+  const filteredModulos = modulos.filter(modulo =>
+    modulo.titulo.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const sortedModulos = filteredModulos.sort((a, b) => {
+    if (a[sortColumn] < b[sortColumn]) {
+      return sortOrder === 'asc' ? -1 : 1;
+    }
+    if (a[sortColumn] > b[sortColumn]) {
+      return sortOrder === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1); // Resetar para a primeira página quando a busca mudar
+  };
+
+  const indexOfLastModulo = currentPage * itemsPerPage;
+  const indexOfFirstModulo = indexOfLastModulo - itemsPerPage;
+  const currentModulos = sortedModulos.slice(indexOfFirstModulo, indexOfLastModulo);
+
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
+
   return (
-    <div>
+    <div className="m-3">
       <Button variant="primary" type="button" onClick={abrirModal} style={{ marginBottom: '20px' }}>
         Novo
       </Button>
       <Modal show={modalAberto} onHide={fecharModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Cadastro de Módulo</Modal.Title>
+          <Modal.Title>{moduloEditando ? 'Editar Módulo' : 'Cadastro de Módulo'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -123,29 +175,49 @@ function Modulos() {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={fecharModal}>Fechar</Button>
-          <Button variant="primary" type="button" onClick={cadastraModulo}>Cadastrar</Button>
+          <Button variant="primary" type="button" onClick={cadastraModulo}>{moduloEditando ? 'Salvar Alterações' : 'Cadastrar'}</Button>
         </Modal.Footer>
       </Modal>
+      <Form.Control
+        type="text"
+        placeholder="Buscar por título"
+        value={search}
+        onChange={handleSearchChange}
+        style={{ marginBottom: '20px' }}
+      />
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Título</th>
+            <th onClick={() => handleSort('titulo')}>
+              Título
+              {sortColumn === 'titulo' && (sortOrder === 'asc' ? <FaArrowUp /> : <FaArrowDown />)}
+            </th>
             <th>Opções</th>
           </tr>
         </thead>
         <tbody>
-          {modulos.map(modulo => (
+          {currentModulos.map(modulo => (
             <tr key={modulo.id} style={{ cursor: 'pointer' }}>
               <td onClick={() => handleModuloClick(modulo.id)}>{modulo.titulo}</td>
               <td>
-                <Button variant="primary" onClick={() => editarModulo(modulo)}>Editar</Button>
+                <Button style={{ marginRight: "10px" }} variant="primary" onClick={() => editarModulo(modulo)}>Editar</Button>
                 <Button variant="danger" onClick={() => excluirModulo(modulo.id)}>Excluir</Button>
               </td>
             </tr>
           ))}
         </tbody>
-
       </Table>
+      <Pagination>
+        {Array.from({ length: Math.ceil(sortedModulos.length / itemsPerPage) }).map((_, index) => (
+          <Pagination.Item
+            key={index + 1}
+            active={index + 1 === currentPage}
+            onClick={() => handlePageChange(index + 1)}
+          >
+            {index + 1}
+          </Pagination.Item>
+        ))}
+      </Pagination>
     </div>
   );
 }

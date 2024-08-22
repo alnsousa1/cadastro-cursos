@@ -1,6 +1,9 @@
+import Swal from 'sweetalert2'; // Importe o SweetAlert
 import React, { useState, useEffect } from "react";
-import { Table, Button, Form, Modal } from 'react-bootstrap';
+import { Table, Button, Form, Modal, Pagination } from 'react-bootstrap';
 import { useParams, useNavigate } from "react-router-dom";
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import { FaArrowUp, FaArrowDown } from 'react-icons/fa'; // Adicione a importação dos ícones
 
 function Aulas() {
   const { moduloId, cursoId } = useParams(); // Pegue moduloId e cursoId dos parâmetros da URL
@@ -10,8 +13,13 @@ function Aulas() {
   const [nome, setNome] = useState('');
   const [descricao, setDescricao] = useState('');
   const [linkAula, setLinkAula] = useState('');
-  const [id, setId] = useState(null); // Adiciona um estado para armazenar o ID da aula a ser editada
+  const [id, setId] = useState(null);
   const [token, setToken] = useState(''); // Adicione lógica para obter o token, se necessário
+  const [search, setSearch] = useState(''); // Estado para busca
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [sortColumn, setSortColumn] = useState('nome'); // Estado para coluna de ordenação
+  const [sortOrder, setSortOrder] = useState('asc'); // Estado para ordem de ordenação
 
   useEffect(() => {
     if (moduloId) {
@@ -20,10 +28,9 @@ function Aulas() {
   }, [moduloId]);
 
   const buscarAulas = () => {
-    console.log(`Fetching aulas for moduloId: ${moduloId}`); // Adicione log para verificar o moduloId
     fetch(`http://localhost:8000/api/v1/cursos/${cursoId}/modulos/${moduloId}/aulas`, {
       headers: {
-        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+        'Authorization': `Bearer ${token}`
       }
     })
       .then(response => response.json())
@@ -31,23 +38,66 @@ function Aulas() {
         setAulas(response.data);
       });
   };
-  console.log(`moduloId recebido: ${moduloId}, cursoId recebido: ${cursoId}`);
+
+  const filteredAulas = aulas.filter(aula => aula.nome.toLowerCase().includes(search.toLowerCase()));
+
+  const sortedAulas = filteredAulas.sort((a, b) => {
+    if (a[sortColumn] < b[sortColumn]) {
+      return sortOrder === 'asc' ? -1 : 1;
+    }
+    if (a[sortColumn] > b[sortColumn]) {
+      return sortOrder === 'asc' ? 1 : -1;
+    }
+    return 0;
+  });
+
+  const handleSort = (column) => {
+    if (sortColumn === column) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const reorderedAulas = Array.from(sortedAulas);
+    const [moved] = reorderedAulas.splice(result.source.index, 1);
+    reorderedAulas.splice(result.destination.index, 0, moved);
+
+    setAulas(reorderedAulas);
+    // Implementar lógica para atualizar a ordem no backend, se necessário
+  };
+
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    setCurrentPage(1); // Resetar para a primeira página quando a busca mudar
+  };
+
+  const indexOfLastAula = currentPage * itemsPerPage;
+  const indexOfFirstAula = indexOfLastAula - itemsPerPage;
+  const currentAulas = sortedAulas.slice(indexOfFirstAula, indexOfLastAula);
+
+  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
   const cadastraAula = () => {
     if (!nome || !descricao || !linkAula) {
-      alert('Por favor, preencha todos os campos.');
+      Swal.fire('Erro', 'Por favor, preencha todos os campos.', 'error');
       return;
     }
+
     const metodo = id ? 'PUT' : 'POST';
-    const url = id 
-      ? `http://localhost:8000/api/v1/aulas/${id}`  // Rota corrigida para edição
-      : `http://localhost:8000/api/v1/modulos/${moduloId}/aulas`;  // Rota para cadastro
+    const url = id
+      ? `http://localhost:8000/api/v1/aulas/${id}`
+      : `http://localhost:8000/api/v1/modulos/${moduloId}/aulas`;
 
     fetch(url, {
       method: metodo,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // Certifique-se de que o token está correto
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ nome, descricao, link_aula: linkAula, curso_id: cursoId })
     })
@@ -60,21 +110,21 @@ function Aulas() {
       })
       .then(data => {
         if (id) {
-          // Atualiza a lista de aulas localmente após edição
           setAulas(aulas.map(aula => aula.id === id ? data : aula));
+          Swal.fire('Sucesso', 'Aula editada com sucesso!', 'success');
         } else {
-          // Adiciona a nova aula à lista existente
           setAulas([...aulas, data]);
+          Swal.fire('Sucesso', 'Aula cadastrada com sucesso!', 'success');
         }
-        fecharModal(); // Fecha o modal após o cadastro ou edição
+        fecharModal();
       })
-      .catch(error => alert(error.message));
+      .catch(error => Swal.fire('Erro', error.message, 'error'));
   };
 
   const editarAula = (id) => {
-    fetch(`http://localhost:8000/api/v1/aulas/${id}`, {  // Rota corrigida para edição
+    fetch(`http://localhost:8000/api/v1/aulas/${id}`, {
       headers: {
-        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+        'Authorization': `Bearer ${token}`
       }
     })
       .then(response => response.json())
@@ -88,20 +138,34 @@ function Aulas() {
   };
 
   const deletarAula = (id) => {
-    fetch(`http://localhost:8000/api/v1/aulas/${id}`, {  // Rota corrigida para exclusão
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}` // Inclua o token, se necessário
+    Swal.fire({
+      title: 'Você tem certeza?',
+      text: "Você não poderá reverter isso!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sim, excluir!',
+      cancelButtonText: 'Cancelar'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetch(`http://localhost:8000/api/v1/aulas/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        })
+          .then(response => {
+            if (response.ok) {
+              setAulas(aulas.filter(aula => aula.id !== id));
+              Swal.fire('Excluída!', 'A aula foi excluída.', 'success');
+            } else {
+              throw new Error('Não foi possível excluir a aula');
+            }
+          })
+          .catch(error => Swal.fire('Erro', error.message, 'error'));
       }
-    })
-      .then(response => {
-        if (response.ok) {
-          setAulas(aulas.filter(aula => aula.id !== id));
-        } else {
-          throw new Error('Não foi possível excluir a aula');
-        }
-      })
-      .catch(error => alert(error.message));
+    });
   };
 
   const abrirModal = () => {
@@ -113,11 +177,11 @@ function Aulas() {
     setNome('');
     setDescricao('');
     setLinkAula('');
-    setId(null); // Reseta o ID da aula ao fechar o modal
+    setId(null);
   };
 
   return (
-    <div>
+    <div className='m-3'>
       <Button variant="primary" type="button" onClick={abrirModal} style={{ marginBottom: '20px' }}>
         Novo
       </Button>
@@ -146,29 +210,66 @@ function Aulas() {
           <Button variant="primary" type="button" onClick={cadastraAula}>{id ? 'Salvar Alterações' : 'Cadastrar'}</Button>
         </Modal.Footer>
       </Modal>
-      <Table striped bordered hover>
-        <thead>
-          <tr>
-            <th>Nome</th>
-            <th>Descrição</th>
-            <th>Link do Vídeo</th>
-            <th>Opções</th>
-          </tr>
-        </thead>
-        <tbody>
-          {aulas.map(aula => (
-            <tr key={aula.id}>
-              <td>{aula.nome}</td>
-              <td>{aula.descricao}</td>
-              <td><a href={aula.link_aula} target="_blank" rel="noopener noreferrer">Assistir</a></td>
-              <td>
-                <Button variant="primary" onClick={() => editarAula(aula.id)}>Editar</Button>
-                <Button variant="danger" onClick={() => deletarAula(aula.id)}>Excluir</Button>
-              </td>
-            </tr>
+      <div>
+        <Form.Control
+          type="text"
+          placeholder="Buscar por nome"
+          value={search}
+          onChange={handleSearchChange}
+          style={{ marginBottom: '20px' }}
+        />
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="aulas">
+            {(provided) => (
+              <Table striped bordered hover {...provided.droppableProps} ref={provided.innerRef}>
+                <thead>
+                  <tr>
+                    <th onClick={() => handleSort('nome')}>
+                      Nome
+                      {sortColumn === 'nome' && (sortOrder === 'asc' ? <FaArrowUp /> : <FaArrowDown />)}
+                    </th>
+                    <th onClick={() => handleSort('descricao')}>
+                      Descrição
+                      {sortColumn === 'descricao' && (sortOrder === 'asc' ? <FaArrowUp /> : <FaArrowDown />)}
+                    </th>
+                    <th>Link do Vídeo</th>
+                    <th>Opções</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentAulas.map((aula, index) => (
+                    <Draggable key={aula.id} draggableId={aula.id.toString()} index={index}>
+                      {(provided) => (
+                        <tr ref={provided.innerRef} {...provided.draggableProps} {...provided.dragHandleProps}>
+                          <td>{aula.nome}</td>
+                          <td>{aula.descricao}</td>
+                          <td><a href={aula.link_aula} target="_blank" rel="noopener noreferrer">Assistir</a></td>
+                          <td>
+                            <Button variant="primary" onClick={() => editarAula(aula.id)}>Editar</Button>
+                            <Button style={{ marginLeft: "10px" }} variant="danger" onClick={() => deletarAula(aula.id)}>Excluir</Button>
+                          </td>
+                        </tr>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </tbody>
+              </Table>
+            )}
+          </Droppable>
+        </DragDropContext>
+        <Pagination>
+          {Array.from({ length: Math.ceil(sortedAulas.length / itemsPerPage) }).map((_, index) => (
+            <Pagination.Item
+              key={index + 1}
+              active={index + 1 === currentPage}
+              onClick={() => handlePageChange(index + 1)}
+            >
+              {index + 1}
+            </Pagination.Item>
           ))}
-        </tbody>
-      </Table>
+        </Pagination>
+      </div>
     </div>
   );
 }
