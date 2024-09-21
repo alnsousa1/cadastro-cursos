@@ -14,6 +14,15 @@ class CursosCollection extends ResourceCollection
      */
     public function toArray($request)
     {
-        return parent::toArray($request);
+        return $this->collection->map(function($curso) {
+            return [
+                'id' => $curso->id,
+                'titulo' => $curso->titulo,
+                'descricao' => $curso->descricao,
+                'imagem' => $curso->imagem,
+                'modulos_count' => $curso->modulos()->count(),
+                'aulas_count' => $curso->modulos()->withCount('aulas')->get()->sum('aulas_count'),
+            ];
+        });
     }
 }
